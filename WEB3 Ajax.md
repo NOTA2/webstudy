@@ -49,7 +49,7 @@ fetch('css').then(function(response){
     - 최종적으로는 콜백함수 안의 ```....```이 실행된다.
 
 ### 요청과 응답
-![](./img6/1.png)
+![](./img/img6/1.png)
 - ```fetch('javascript')``` : client가 server에게 javascript 파일을 요청
 - 서버가 응답할때 시간이 오래 걸릴 수 있으니 ```then```을 쓴다.
     - 이는 서버의 응답이 끝나면 매개변수로 있는 함수를 실행한다.
