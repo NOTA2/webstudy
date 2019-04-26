@@ -1,4 +1,4 @@
-# 5주차 - WEB2 - JavaScript
+# WEB2 - JavaScript
 
 ## 수업소개
 

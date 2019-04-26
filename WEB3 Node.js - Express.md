@@ -1,4 +1,4 @@
-# WEB3 - Express
+# WEB3 - Node.js Express
 
 ## 수업소개
 
@@ -165,7 +165,7 @@ app.use(function(req,res,next){
 })
 ```
 - 해당 미들웨어가 필요 없는 라우터가 있다면 이는 낭비이다.
-```
+```js
 app.get('*', function(request, response, next){
   fs.readdir('./data', function(error, filelist){
     request.list = filelist;
@@ -227,7 +227,7 @@ app.get('/user/:id', function (req, res, next) {
 ### 404에러
 - 코드의 마지막에 아래의 코드를 추가한다.
 
-```
+```js
 app.use(function(req, res, next) {
     res.status(404).send('Sorry cant find that!');
 });
@@ -240,7 +240,7 @@ app.use(function(req, res, next) {
     - 에러가 있는 경우 next를 호출할때 해당 에러를 인자로준다.
     - ```next(err)```을 주면 에러가 다음 라우터로 가지않고 에러처리를 하게된다.
 - 또한 404 에러처리 코드 밑에 아래의 코드를 추가한다.
-```
+```js
 app.use(function (err, req, res, next) {
     console.error(err.stack)
     res.status(500).send('Something broke!')

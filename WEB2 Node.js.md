@@ -92,7 +92,7 @@ Lorem ipsum dolor sit amet, conse`
     - 값과 값 사이는 ```&```을 사용한다.
     - 값의 이름과 값은 ```=```로 구분한다.
 
-![](./img/1.png)
+![](./img7/1.png)
 
 - url의 값은 ```request.url```에 들어가게 된다.
     - port이후 path부터 나온다.(ex. ```/?id=HTML```)
