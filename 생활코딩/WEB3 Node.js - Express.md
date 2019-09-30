@@ -41,7 +41,7 @@ app.listen(3000, () => console.log('Example app listening on port 3000!'))
 ```
 - express는 함수이다. 이를 실행하고 반환된 값이 app에 할당된다.
 - ```app.get``` : 첫번째 인자로 사용자가 접근할 path 두번째 인자로 접근시 실행될 콜백함수를 받는다.
-    - 이를 route, routing이라고 한다.
+    - 이를 router, routing이라고 한다.
     - 사용자들이 path를 통해 들어올때 각 path에 맞는 응답을 해주는 것이다.
 - ```app.listen``` : 웹서버가 실행되면서 인자로 전달한 port를 listen하게되고, 콜백함수가 실행된다. 
 
@@ -78,7 +78,7 @@ app.get('/', function(request, response) {
 - 서버의 코드에서 파라미터를 받고싶은 곳에 ```:```을 사용하면 해당 자리의 값은 파라미터로 들어온다.
 
 ```
-Route path: /users/:userId/books/:bookId
+router path: /users/:userId/books/:bookId
 Request URL: http://localhost:3000/users/34/books/8989
 req.params: { "userId": "34", "bookId": "8989" }
 ```
@@ -196,10 +196,10 @@ app.use('/user/:id', function (req, res, next) {
 })
 ```
 
-- next()를 실행할때 파라미터로 ```'route'``` 준다면 이어진 함수를 실행하지 않고 다음 라우터의 미들웨어를 실행한다.
+- next()를 실행할때 파라미터로 ```'router'``` 준다면 이어진 함수를 실행하지 않고 다음 라우터의 미들웨어를 실행한다.
 ```js
 app.get('/user/:id', function (req, res, next) {
-    if (req.params.id === '0') next('route')      //이 경우 밑의 라우터가 실행
+    if (req.params.id === '0') next('router')      //이 경우 밑의 라우터가 실행
     else next()                                   //이 경우 이어진 다음 함수가 실행
 }, function (req, res, next) {
     res.send('regular')
@@ -260,7 +260,7 @@ app.use('/topic', topicRouter)
 ```
 - topic으로 들어오는 요청들에게 topicRouter라는 미들웨어를 달아줬다.
 
-#### route/topic.js
+#### router/topic.js
 ```js
 var express = require('express');
 var router = express.Router();
