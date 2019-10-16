@@ -162,6 +162,11 @@
 
 ### Template Literals (템플릿 리터럴)
 
+- ``` ` ``` 를 사용한다.
+- 여러 줄에 걸쳐 문자열을 작성할 수 있으며 모든 white-space는 있는 그대로 적용
+- 문자열 인터폴레이션(String Interpolation)
+  - `${ … }`으로 표현식을 감싼다. 문자열 인터폴레이션 내의 표현식은 문자열로 강제 타입 변환
+
 - ES5
   
   ```JS
@@ -184,6 +189,8 @@
 ---
 
 ### Default Parameters (기본 매개변수)
+
+- 매개변수의 기본 값을 설정할 수 있다.
 
 - ES5
   
@@ -258,66 +265,6 @@
   var args = [0, 1, 2];
   myFunction(...args);
   ```
-
----
-
-### for..of 반복문
-
-- iterator 기반의 컬렉션 전용 반복문
-  - for of 구문을 사용하기 위해선 컬렉션 객체가 [Symbol.iterator] 속성을 가지고 있어야 한다.(직접 명시 가능).
-
-> #### for …in 반복문
->
-> - for in 반복문은 객체의 속성들을 반복.
-> - 모든 객체에서 사용이 가능
-> - for in 구문은 객체의 key 값에 접근할 수 있지만, value 값에 접근하는 방법은 제공하지 않음
-> - for in 구문은 `[[Enumerable]]` true로 셋팅되어 속성들(열거형 속성)만 반복 가능.
->
-> ```JS
-> var obj = {
->   a: 1, b: 2, c: 3
-> };
->
-> for (var prop in obj) {
->   console.log(prop, obj[prop]); // a 1, b 2, c 3
-> }
-> ```
->
->> #### for in 반복문과 for of 반복문의 차이점
->>
->> - for in 반복문 : 객체의 모든 열거 가능한 속성에 대해 반복
->> - for of 반복문 : `[Symbol.iterator]` 속성을 가지는 컬렉션 전용
->>
->> ```JS
->> Object.prototype.objCustom = function () {};
->> Array.prototype.arrCustom = function () {};
->>
->> var iterable = [3, 5, 7];
->> iterable.foo = "hello";
->>
->> for (var key in iterable) {
->>   console.log(key); // 0, 1, 2, "foo", "arrCustom", "objCustom"
->> }
->>
->> for (var value of iterable) {
->>   console.log(value); // 3, 5, 7
->> }
->> ```
-
-> #### foreach 반복문
->
-> - 오직 Array 객체에서만 사용가능한 메서드.(ES6부터는 Map, Set 등에서도 지원)
-> - 배열의 요소들을 반복하여 작업을 수행
-> - 인자로 callback 함수를 등록할 수 있고, 배열의 각 요소들이 반복될 때 callback 함수가 호출
->   - callback 함수에서 배열 요소의 인덱스와 값에 접근
->
-> ```JS
-> var items = ['item1', 'item2', 'item3'];
->
-> items.forEach(function(item) {
->   console.log(item);
-> });
-> ```
 
 ---
 
@@ -418,18 +365,199 @@
 
 ## ES6 중요개념
 
+### Iteration (이터레이션)
+
+#### Iterator protocol (이터레이션 프로토콜)
+
+- 데이터 컬렉션을 순회하기 위한 protocol
+- 이터레이션 protocol을 준수한 객체는
+  1. for…of 문으로 순회 가능
+  2. Spread 문법의 피연산자가 될 수 있다.
+
+#### Iterable (객체)
+
+- iterable protocol을 준수한 객체를 iterable이라 한다.
+- iterable은 `Symbol.iterator` 메소드를 구현하거나 상속한 객체
+  - Array, String, Map, Set, Arguments
+  - 일반 객체는 Symbol.iterator 메소드를 소유하지 않는다. 따라서 일반 객체는 iterable이 아니다.
+    - 일반 객체도 iterable protocol을 준수하도록 구현하면 iterable이 된다.
+- `Symbol.iterator` 메소드는 iterator를 반환
+
+```JS
+const array = [1, 2, 3];
+
+// 배열은 Symbol.iterator 메소드를 소유한다.
+// 따라서 배열은 iterable protocol을 준수한 iterable이다.
+console.log(Symbol.iterator in array); // true
+
+// iterable protocol을 준수한 배열은 for...of 문에서 순회 가능하다.
+for (const item of array) {
+  console.log(item);
+}
+```
+
+#### Iterator
+
+- **Iterable 객체 내부의 `Symbol.iterator` 메소드 호출시 반환되는 객체**
+
+- next 메소드 : iterable의 각 요소를 순회하기 위한 포인터
+  1. 해당 iterable(객체)을 순차적으로 한 단계씩 순회
+  2. value, done 프로퍼티를 갖는 `iterator result 객체`를 반환
+
+```JS
+// 배열은 iterable protocol을 준수한 iterable이다.
+const array = [1, 2, 3];
+
+// Symbol.iterator 메소드는 iterator를 반환한다.
+const iterator = array[Symbol.iterator]();  //iterator 반환
+
+// iterator는 next 메소드를 갖는다.
+console.log('next' in iterator); // true
+
+// iterator의 next 메소드를 호출하면 value, done 프로퍼티를 갖는 result 객체를 반환.
+let iteratorResult = iterator.next();
+console.log(iteratorResult); // {value: 1, done: false}
+```
+
+#### 커스텀 Iterable
+
+- 일반 객체에 `[Symbol.iterator]`를 정의하여 Iterable 객체로 만든다.
+
+```JS
+const fibonacci = {
+  // Symbol.iterator 메소드를 구현하여 iterable protocol을 준수
+  [Symbol.iterator]() {
+    let [pre, cur] = [0, 1];
+    const max = 10;         // 최대값
+
+    // Symbol.iterator 메소드는 next 메소드를 소유한 iterator를 반환해야 한다.
+    // next 메소드는 iterator result 객체를 반환
+    return {
+      // fibonacci 객체를 순회할 때마다 next 메소드가 호출된다.
+      next() {
+        [pre, cur] = [cur, pre + cur];
+        return {
+          value: cur,
+          done: cur >= max
+        };
+      }
+    };
+  }
+};
+
+// iterable의 최대값을 외부에서 전달할 수 없다.
+for (const num of fibonacci) {
+  // for...of 내부에서 break는 가능하다.
+  // if (num >= 10) break;
+  console.log(num); // 1 2 3 5 8
+}
+```
+
+---
+
+### for..of 반복문
+
+- iterator 기반의 컬렉션 전용 반복문
+  - for of 구문을 사용하기 위해선 컬렉션 객체가 [Symbol.iterator] 속성을 가지고 있어야 한다.(즉, iterable protocol을 준수하는 iterable이어야 한다.)
+- 내부적으로 iterator의 next 메소드를 호출하여 iterable을 순회
+- next 메소드가 반환한 iterator result 객체의 value 프로퍼티 값을 for…of 문의 변수에 할당
+
+```JS
+// 배열
+for (const item of ['a', 'b', 'c']) {
+  console.log(item);
+}
+
+/***********************************************
+for…of 문이 내부적으로 동작하는 것을 for 문으로 표현
+***********************************************/
+
+// iterable 객체
+const iterable = [1, 2, 3];
+
+// iterator
+const iterator = iterable[Symbol.iterator]();
+
+for (;;) {
+  // iterator의 next 메소드를 호출하여 iterable을 순회한다.
+  const res = iterator.next();
+
+  // next 메소드가 반환하는 iterator result 객체의 done 프로퍼티가 true가 될 때까지 반복한다.
+  if (res.done) break;
+
+  console.log(res);
+}
+```
+
+> #### for …in 반복문
+>
+> - for in 반복문은 객체의 속성들을 반복.
+> - 모든 객체에서 사용이 가능
+> - for in 구문은 객체의 key 값에 접근할 수 있지만, value 값에 접근하는 방법은 제공하지 않음
+> - for in 구문은 `[[Enumerable]]` true로 셋팅되어 속성들(열거형 속성)만 반복 가능.
+>
+> ```JS
+> var obj = {
+>   a: 1, b: 2, c: 3
+> };
+>
+> for (var prop in obj) {
+>   console.log(prop, obj[prop]); // a 1, b 2, c 3
+> }
+> ```
+>
+>> #### for in 반복문과 for of 반복문의 차이점
+>>
+>> - for in 반복문 : 객체의 모든 열거 가능한 속성에 대해 반복. key로 반복
+>> - for of 반복문 : `[Symbol.iterator]` 속성을 가지는 컬렉션 전용. value로 반복
+>>
+>> ```JS
+>> Object.prototype.objCustom = function () {};
+>> Array.prototype.arrCustom = function () {};
+>>
+>> var iterable = [3, 5, 7];
+>> iterable.foo = "hello";
+>>
+>> for (var key in iterable) {
+>>   console.log(key); // 0, 1, 2, "foo", "arrCustom", "objCustom"
+>> }
+>>
+>> for (var value of iterable) {
+>>   console.log(value); // 3, 5, 7
+>> }
+>> ```
+
+> #### foreach 반복문
+>
+> - 오직 Array 객체에서만 사용가능한 메서드.(ES6부터는 Map, Set 등에서도 지원)
+> - 배열의 요소들을 반복하여 작업을 수행
+> - 인자로 callback 함수를 등록할 수 있고, 배열의 각 요소들이 반복될 때 callback 함수가 호출
+>   - callback 함수에서 배열 요소의 인덱스와 값에 접근
+>
+> ```JS
+> var items = ['item1', 'item2', 'item3'];
+>
+> items.forEach(function(item) {
+>   console.log(item);
+> });
+> ```
+
+---
+
 ### 비동기 처리 (Promise - Generator - Co - async/await)
 
 - 모든 비동기 함수는 Promise를 반환하도록 한다.
-  - 기존의 callback 스타일로 작성해도 되는 간단한 코드들도 모두 promise를 반환한다.
+  - 즉, 기존의 callback 스타일로 작성해도 되는 간단한 코드들도 모두 promise를 반환한다.
   - Promise는 미래에 생성되는 값을 나타내는 일급 객체.
-  - **이를 통해서 Promise - CO를 사용한 Generator - async/await 로 이어지게끔(리팩토링 가능하게끔) 하는 것이 목적**
+  - **최종적으로는 이를 통해서 Promise - CO를 사용한 Generator - async/await 로 이어지게끔(리팩토링 가능하게끔) 하는 것이 목적**
 
 #### Promise
 
-1. 대기중(pending)
-2. 이행됨(fulfilled)
-3. 거부됨(rejected)
+- 비동기처리를 행하는 함수는 Promise를 반환, 부른 쪽에서는 Promise에 콜백 함수를 등록한다.
+
+1. 대기중(pending) : 이행하거나 거부되지 않은 초기 상태.
+2. 이행됨(fulfilled) : 연산이 성공적으로 완료
+3. 거부됨(rejected) : 연산이 실패
 
 ```JS
 var promiseTest = (num) => {
@@ -439,42 +567,48 @@ var promiseTest = (num) => {
         } else {
             reject("err")
         }
-    }
+    });
 }
 
 promiseTest(5)
-    .then(val => console.log(val)) // 5
-    .catch(err => console.log(err)) //"err"
+    .then(val => console.log(val)) // 5 (resolve)
+    .catch(err => console.log(err)) //"err" (reject)
 ```
 
-```JS
-//ES5
-setTimeout(function(){
-  console.log('Yay!')
+- ES5
+
+  ```JS
   setTimeout(function(){
-    console.log('Wheeyee!')
+    console.log('Yay!')
+    setTimeout(function(){
+      console.log('Wheeyee!')
+    }, 1000)
   }, 1000)
-}, 1000)
-```
+  ```
 
-```JS
-//ES6
-var wait1000 = () => new Promise((resolve, reject) => {
-    setTimeout(resolve, 1000)
-  })
+- ES6
 
-wait1000()
-    .then(function() {
-        console.log('Yay!')
-        return wait1000()
-    })
-    .then(function() {
-        console.log('Wheeyee!')
-    });
-```
+    ```JS
+    var wait1000 = () => new Promise((resolve, reject) => {
+        setTimeout(resolve, 1000)
+      })
+
+    wait1000()
+        .then(function() {
+            console.log('Yay!')
+            return wait1000()
+        })
+        .then(function() {
+            console.log('Wheeyee!')
+        });
+    ```
 
 #### Generator (function*)
 
+- Generator는 함수안의 임의의 장소에서 처리를 중단/재개할 수 있는 구조를 제공
+  - 이 구조는 일반적으로 코루틴(co-rutine)이라 불립니다.
+  - 무한 리스너나 이터레이터등의 구현을 할 수 있습니다.
+- 비동기 처리가 개시되면 처리를 중단, 비동기처리가 완료되면 처리를 재개한 뒤 연결 처리를 실행해 나감
 - ```function*```선언을 하면 generator function을 정의한다.
   - Generator는 빠져나갔다가 나중에 다시 돌아올 수 있는 함수
     - 이때 컨텍스트(변수 값)는 출입 과정에서 저장된 상태로 남아 있다.
@@ -495,7 +629,7 @@ console.log(gen.next().value);
 // expected output: 20
 ```
   
-1. 호출되어도 즉시 실행되지 않고, 대신 함수를 위한 Iterator 객체가 반환
+1. 호출되어도 즉시 실행되지 않고, 대신 Generator 함수를 위한 Iterator 객체가 반환
 2. Iterator의 next() 메서드를 호출하면 Generator 함수가 실행
 3. yield 문을 만날 때까지 진행
 4. 해당 표현식이 명시하는 Iterator로부터의 반환값을 반환
@@ -503,36 +637,36 @@ console.log(gen.next().value);
 
 - next() 가 반환하는 객체는 아래와 같이 구성된다.
   
-  - ```JS
-      {
-        value : yield문이 반환할 값(yielded value),
-        doen : Generator 함수 안의 모든 yield 문의 실행 여부(boolean)
-      }
-    ```
+  ```JS
+  {
+    value : yield문이 반환할 값(yielded value),
+    doen : Generator 함수 안의 모든 yield 문의 실행 여부(boolean)
+  }
+  ```
 
 - yield* 표현식을 마주칠 경우, 다른 Generator 함수가 위임(delegate)되어 진행
 
-  - ```JS
-      function* anotherGenerator(i) {
-        yield i + 1;
-        yield i + 2;
-        yield i + 3;
-      }
+  ```JS
+  function* anotherGenerator(i) {
+    yield i + 1;
+    yield i + 2;
+    yield i + 3;
+  }
 
-      function* generator(i){
-        yield i;
-        yield* anotherGenerator(i);
-        yield i + 10;
-      }
+  function* generator(i){
+    yield i;
+    yield* anotherGenerator(i);
+    yield i + 10;
+  }
 
-      var gen = generator(10);
+  var gen = generator(10);
 
-      console.log(gen.next().value); // 10
-      console.log(gen.next().value); // 11
-      console.log(gen.next().value); // 12
-      console.log(gen.next().value); // 13
-      console.log(gen.next().value); // 20
-    ```
+  console.log(gen.next().value); // 10
+  console.log(gen.next().value); // 11
+  console.log(gen.next().value); // 12
+  console.log(gen.next().value); // 13
+  console.log(gen.next().value); // 20
+  ```
 
 #### Co 모듈
 
@@ -545,20 +679,20 @@ console.log(gen.next().value);
 - 암시적으로 Promise를 사용하여 결과를 반환
 
 - 리팩토링 (Generator -> async/await)
+  
+  ```JS
+  // ES6 - Generator
+  const bigPicture = function* () {
+    let awesome = yield beautiful()
+  }
 
-  - ```JS
-      // ES6 - Generator
-      const bigPicture = function* () {
-      let awesome = yield beautiful()
-      }
+  // ES8 - async/await
+  const bigPicture = async function() {
+    let awesome = await beautiful()
+  }
+  ```
 
-      // ES8 - async/await
-      const bigPicture = async function() {
-      let awesome = await beautiful()
-      }
-      ```
-
-  - `*` -> `async` 
+  - `function*` -> `async function`
   - `yield` -> `await`
 
 ---
@@ -811,6 +945,7 @@ function findUsers(ids) {
 - default export
   - 단 하나의 변수 혹은 함수를 export.
   - `{}`를 사용하지 않아도 되며, 상응하는 이름이 없어도 import 가능.
+  - 하나의 모듈당 default export는 하나만 존재할 수 있다.
   
 - 외부의 다른 파일을 다시 export 할 수 있다.
 
@@ -837,6 +972,25 @@ import ln, {pi, e} from "lib/mathplusplus";
 console.log("2π = " + ln(e)*pi*2);
 ```
 
+```JS
+//name export
+export { name1, name2, ..., nameN };
+export { variable1 as name1, variable2 as name2, ..., nameN };
+export let name1, name2, ..., nameN;    // 또는 var
+export let name1 = ..., name2 = ..., ..., nameN;  // 또는 var, const
+
+//default export
+export expression;            ///////////테스트 해봐야함///////////
+export default expression;
+export default function (...) { ... }   // 또는 class, function* ///////////테스트 해봐야함///////////
+export default function name1(...) { ... }    // 또는 class, function*
+export { name1 as default, ... };
+
+//외부의 파일을 export
+export * from ...;    //모든 변수를 export
+export { name1, name2, ..., nameN } from ...;
+export { import1 as name1, import2 as name2, ..., nameN } from ...;
+```
 
 #### import
 
@@ -844,9 +998,40 @@ console.log("2π = " + ln(e)*pi*2);
 - 절대 이름(absolute name)을 이용하여 import 하는 것도 가능
   - 절대 이름을 사용하여 import할 때는 자바스크립트가 이에 상응하는 패키지 이름을 node_modules에서 검색
 
-  - ```JS
-      import React from 'react';
-      ```
+  ```JS
+  import React from 'react';
+  ```
+
+- 기본 값(default export 된 값)과 일반 name export 값을 같이 가져 올 경우, 기본 값을 가져오는 부분이 먼저 선언되야 합니다.
+
+  ```JS
+  import defaultMember, { member [, [...]] } from "module-name";
+  ```
+
+```JS
+import name from "module-name";            ///////////테스트 해봐야함///////////
+
+//모듈 전체 가져오기. export 된 모든 것들을 현재 범위(scope) 내에 name에 바인딩 됩니다.
+import * as name from "module-name";
+
+//해당 이름으로 name export된 멤버 가져오기
+import { member } from "module-name";
+import { member as alias } from "module-name";
+import { member1, member2 } from "module-name";
+import { member1, member2 as alias2, [...] } from "module-name";
+
+//해당 이름으로 default export된 것 가져오기
+import defaultMember from "module-name";
+
+//default export된 것과 명시된 멤버도 같이 가져오기
+import defaultMember, { member [, [...]] } from "module-name";
+
+//default export된 것과 name export된 모든 값 가져오기
+import defaultMember, * as alias from "module-name";
+
+//특정 모듈을 불러와 실행만 할 목적
+import "module-name";
+```
 
 ---
 
@@ -865,3 +1050,5 @@ console.log("2π = " + ln(e)*pi*2);
 - [Mozilla 재단 JavaScript 참고자료](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference)
 - [let으로 변수 선언하기](https://www.daleseo.com/js-es2015-let/)
 - [[자바스크립트] ES6(ECMA Script6) - export, import](https://beomy.tistory.com/22)
+- [이터레이션과 for...of 문](https://poiemaweb.com/es6-iteration-for-of#3-%EC%BB%A4%EC%8A%A4%ED%85%80-%EC%9D%B4%ED%84%B0%EB%9F%AC%EB%B8%94)
+- JavaScript Promise (e-book)
