@@ -96,9 +96,9 @@
   var email = 'code.ryan.lee@gmail.com'
 
   var datas = {
-  name: name,
-  age: age,
-  email: email
+    name: name,
+    age: age,
+    email: email
   }
   ```
 
@@ -123,17 +123,6 @@
   var serviceBase = {port: 3000, url: 'azat.co'},
       getAccounts = function(){return [1,2,3]}
 
-  var accountServiceES5 = {
-    port: serviceBase.port,
-    url: serviceBase.url,
-    getAccounts: getAccounts,
-    toString: function() {
-      return JSON.stringify(this.valueOf())
-    },
-    getUrl: function() {return "http://" + this.url + ':' + this.port},
-    valueOf_1_2_3: getAccounts()
-  }.
-
   var accountServiceES5ObjectCreate = {
     getAccounts: getAccounts,
     toString: function() {
@@ -142,7 +131,9 @@
     getUrl: function() {return "http://" + this.url + ':' + this.port},
     valueOf_1_2_3: getAccounts()
   }
+
   accountServiceES5ObjectCreate.__proto__ = Object.create(serviceBase)
+  //serviceBase를 확장하길 원한다면 Object.create 로 프로토타입화하여 상속
   ```
 
 - ES6
@@ -150,6 +141,7 @@
   ```JS
   var serviceBase = {port: 3000, url: 'azat.co'},
       getAccounts = function(){return [1,2,3]}
+
   var accountService = {
       __proto__: serviceBase,
       getAccounts,
@@ -168,16 +160,16 @@
 
 ---
 
-### Template Literals
+### Template Literals (템플릿 리터럴)
 
 - ES5
   
-``` JS
-var username = req.body.username
-if ( !username ) {
-    throw "'username' must required. Your input: " + username  + "."
-}
-```
+  ```JS
+  var username = req.body.username
+  if ( !username ) {
+      throw "'username' must required. Your input: " + username  + "."
+  }
+  ```
 
 - ES6
 
@@ -298,7 +290,7 @@ if ( !username ) {
 >>
 >> ```JS
 >> Object.prototype.objCustom = function () {};
->> Array.prototype.arrCustom = function () {}; 
+>> Array.prototype.arrCustom = function () {};
 >>
 >> var iterable = [3, 5, 7];
 >> iterable.foo = "hello";
@@ -372,7 +364,6 @@ if ( !username ) {
 >   ```
 >
 > - 기존 코드를 바꿀 때, 변경되는 조건문은 이전 조건문과 상호배타적 이어야한다.
-
 
 > ### underscore.js (or lodash.js)
 >
@@ -566,7 +557,7 @@ console.log(gen.next().value);
       let awesome = await beautiful()
       }
       ```
-      
+
   - `*` -> `async` 
   - `yield` -> `await`
 
