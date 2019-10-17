@@ -940,14 +940,12 @@ function findUsers(ids) {
 - name export
   - 여러 개의 변수 및 함수를 export 가능
   - `{}`를 사용하며 import시에도 `{}`를 사용해야 하며 상응 하는 이름으로 import.
-  - `*`를 사용하여 모든 변수를 export할 수 있다.
+  - `*`를 사용하여 모든 변수를 export 할 수 있다. (외부의 다른 파일을 다시 export 할 때만 가능)
 
 - default export
   - 단 하나의 변수 혹은 함수를 export.
   - `{}`를 사용하지 않아도 되며, 상응하는 이름이 없어도 import 가능.
   - 하나의 모듈당 default export는 하나만 존재할 수 있다.
-  
-- 외부의 다른 파일을 다시 export 할 수 있다.
 
 ```JS
 // lib/math.js
@@ -980,10 +978,10 @@ export let name1, name2, ..., nameN;    // 또는 var
 export let name1 = ..., name2 = ..., ..., nameN;  // 또는 var, const
 
 //default export
-export expression;            ///////////테스트 해봐야함///////////
 export default expression;
-export default function (...) { ... }   // 또는 class, function* ///////////테스트 해봐야함///////////
+export default function (...) { ... }   // 또는 class, function*
 export default function name1(...) { ... }    // 또는 class, function*
+//함수명은 있어도 없어도 상관없다. default로 넘길시 이 이름을 사용하던 안하던 상관없기 때문
 export { name1 as default, ... };
 
 //외부의 파일을 export
@@ -995,8 +993,8 @@ export { import1 as name1, import2 as name2, ..., nameN } from ...;
 #### import
 
 - as 키워드를 사용해 별칭을 사용할 수 있다.
-- 절대 이름(absolute name)을 이용하여 import 하는 것도 가능
-  - 절대 이름을 사용하여 import할 때는 자바스크립트가 이에 상응하는 패키지 이름을 node_modules에서 검색
+- 절대 이름(absolute name)을 이용하여 import 하는 것도 가능 (경로를 사용하지 않고)
+  - 절대 이름으로 import할 때는 이에 상응하는 패키지 이름을 node_modules에서 검색
 
   ```JS
   import React from 'react';
@@ -1009,8 +1007,6 @@ export { import1 as name1, import2 as name2, ..., nameN } from ...;
   ```
 
 ```JS
-import name from "module-name";            ///////////테스트 해봐야함///////////
-
 //모듈 전체 가져오기. export 된 모든 것들을 현재 범위(scope) 내에 name에 바인딩 됩니다.
 import * as name from "module-name";
 
@@ -1020,14 +1016,14 @@ import { member as alias } from "module-name";
 import { member1, member2 } from "module-name";
 import { member1, member2 as alias2, [...] } from "module-name";
 
-//해당 이름으로 default export된 것 가져오기
+//default export된 것을 명시된 이름(defaultMember)으로 가져오기
 import defaultMember from "module-name";
 
 //default export된 것과 명시된 멤버도 같이 가져오기
 import defaultMember, { member [, [...]] } from "module-name";
 
 //default export된 것과 name export된 모든 값 가져오기
-import defaultMember, * as alias from "module-name";
+import defaultMember, * as alias from "module-name";  //이때 alias에도 default 값은 들어있다.
 
 //특정 모듈을 불러와 실행만 할 목적
 import "module-name";
