@@ -370,17 +370,18 @@
 #### Iterator protocol (이터레이션 프로토콜)
 
 - 데이터 컬렉션을 순회하기 위한 protocol
-- 이터레이션 protocol을 준수한 객체는
+  - iterable protocol과 iterator protocol이 있다.
+- 이터레이션 protocol을 준수한 객체(Iterable)는
   1. for…of 문으로 순회 가능
   2. Spread 문법의 피연산자가 될 수 있다.
 
 #### Iterable (객체)
 
 - iterable protocol을 준수한 객체를 iterable이라 한다.
-- iterable은 `Symbol.iterator` 메소드를 구현하거나 상속한 객체
+- 즉, iterable은 `Symbol.iterator` 메소드를 구현하거나 상속한 객체
   - Array, String, Map, Set, Arguments
   - 일반 객체는 Symbol.iterator 메소드를 소유하지 않는다. 따라서 일반 객체는 iterable이 아니다.
-    - 일반 객체도 iterable protocol을 준수하도록 구현하면 iterable이 된다.
+    - 일반 객체도 iterable protocol을 준수하도록 구현하면 iterable이 된다. (커스텀 Iterable)
 - `Symbol.iterator` 메소드는 iterator를 반환
 
 ```JS
@@ -396,7 +397,7 @@ for (const item of array) {
 }
 ```
 
-#### Iterator
+#### Iterator (객체)
 
 - **Iterable 객체 내부의 `Symbol.iterator` 메소드 호출시 반환되는 객체**
 
@@ -452,6 +453,89 @@ for (const num of fibonacci) {
   console.log(num); // 1 2 3 5 8
 }
 ```
+
+> #### iterable을 생성하는 함수
+>
+> ```JS
+> // iterable을 반환하는 함수
+> const fibonacciFunc = function (max) {
+>   let [pre, cur] = [0, 1];
+>
+>   return {
+>     // Symbol.iterator 메소드가 있으므로 iterable
+>     [Symbol.iterator]() {
+>       // Symbol.iterator 메소드는 next 메소드를 소유한 iterator를 반환해야 한다.
+>       // next 메소드는 iterator result 객체를 반환
+>       return {
+>         // fibonacci 객체를 순회할 때마다 next 메소드가 호출된다.
+>         next() {
+>           [pre, cur] = [cur, pre + cur];
+>           return {
+>             value: cur,
+>             done: cur >= max
+>           };
+>         }
+>       };
+>     }
+>   };
+> };
+>
+> // iterable을 반환하는 함수에 iterable의 최대값을 전달한다.
+> for (const num of fibonacciFunc(10)) {
+>   console.log(num); // 1 2 3 5 8
+> }
+> ```
+>
+> - fibonacci iterable의 최대값을 외부에서 전달
+> - iterable의 최대 순회수를 전달받아 iterable을 반환하는 함수
+>
+
+> #### iterable이면서 iterator인 객체를 생성하는 함수
+>
+> - iterator를 생성하려면 iterable의 Symbol.iterator 메소드를 호출해야 한다.
+> - iterable이면서 iterator인 객체를 생성하면 Symbol.iterator 메소드를 호출하지 않아도 된다.
+>
+> ```JS
+> // iterable이면서 iterator인 객체를 반환하는 함수
+> const fibonacciFunc = function (max) {
+>   let [pre, cur] = [0, 1];
+>
+>   // Symbol.iterator 메소드를 소유한 iterable이면서
+>   // next 메소드를 소유한 iterator인 객체를 반환
+>   return {
+>     // Symbol.iterator 메소드
+>     [Symbol.iterator]() {
+>       return this;        //this를 반환하므로 next 메소드를 갖는 iterator를 반환
+>     },
+>     // next 메소드는 iterator 리절트 객체를 반환
+>     next() {
+>       [pre, cur] = [cur, pre + cur];
+>       return {
+>         value: cur,
+>         done: cur >= max
+>       };
+>     }
+>   };
+> };
+>
+> // iter는 iterable이면서 iterator이다.
+> let iter = fibonacciFunc(10);
+>
+> // iter는 iterator이다.
+> console.log(iter.next()); // {value: 1, done: false}
+> console.log(iter.next()); // {value: 2, done: false}
+> console.log(iter.next()); // {value: 3, done: false}
+> console.log(iter.next()); // {value: 5, done: false}
+> console.log(iter.next()); // {value: 8, done: false}
+> console.log(iter.next()); // {value: 13, done: true}
+>
+> iter = fibonacciFunc(10);
+>
+> // iter는 iterable이다.
+> for (const num of iter) {
+>   console.log(num); // 1 2 3 5 8
+> }
+> ```
 
 ---
 
@@ -607,7 +691,7 @@ promiseTest(5)
 
 - Generator는 함수안의 임의의 장소에서 처리를 중단/재개할 수 있는 구조를 제공
   - 이 구조는 일반적으로 코루틴(co-rutine)이라 불립니다.
-  - 무한 리스너나 이터레이터등의 구현을 할 수 있습니다.
+  - 무한 리스너나 iterator등의 구현을 할 수 있습니다.
 - 비동기 처리가 개시되면 처리를 중단, 비동기처리가 완료되면 처리를 재개한 뒤 연결 처리를 실행해 나감
 - ```function*```선언을 하면 generator function을 정의한다.
   - Generator는 빠져나갔다가 나중에 다시 돌아올 수 있는 함수
@@ -833,16 +917,16 @@ testFunction();
 - const는 상수 처럼 사용된다.
   - 단, 담긴 값이 불변을 뜻하는게 아니라, 단지 변수의 식별자가 재할당 될 수 없다.
 
-  - ```JS
-      const ME = { "name": "ES6" }
-      console.log(ME.name); //ES6
+  ```JS
+  const ME = { "name": "ES6" }
+  console.log(ME.name); //ES6
 
-      ME.name = "ES7";
-      console.log(ME.name); //ES7, 객체 값 재할당
+  ME.name = "ES7";
+  console.log(ME.name); //ES7, 객체 값 재할당
 
-      ME = {}; //변수 자체는 상수값으로 수정되지 않는다.
-      console.log(ME); //{ name: 'ES7' }
-      ```
+  ME = {}; //변수 자체는 상수값으로 수정되지 않는다.
+  console.log(ME); //{ name: 'ES7' }
+  ```
 
 ### var를 쓰면 안되는 이유
 
@@ -851,9 +935,9 @@ testFunction();
 ```JS
 var n = 1
 function test() {
-  console.log(n)
+  console.log(n)    //undefined
   var n = 2
-  console.log(n)
+  console.log(n)    //2
 }
 test()
 ```
@@ -903,7 +987,7 @@ function findUser(id, cb) {
 }
 
 function findUsers(ids) {
-  for (var i in ids) {    //문제의 부분
+  for (var i in ids) {    //문제의 부분 (var i가 호이스팅 된다.)
     findUser(ids[i], function(user) {
       console.log(i, "번째 사용자를 출력합니다.");
       console.log(user);
@@ -911,12 +995,12 @@ function findUsers(ids) {
   }
 }
 
-findUsers([3, 7, 29, 105]);
+findUsers([3, 7, 29, 105]);     //i를 출력하는 모든 부분이 105로 출력된다.
 ```
 
 ```JS
 function findUsers(ids) {
-  var i;
+  var i;                //이 때문에 원하는 결과와 달라진다.
   for (i in ids) {
     findUser(ids[i], function(user) {
       console.log(i, "번째 사용자를 출력합니다.");
@@ -1035,6 +1119,7 @@ import "module-name";
 
 ## 참고
 
+- [Mozilla 재단 JavaScript 참고자료](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference)
 - [[이상학의 개발블로그] 아름다운 JavaScript를 위한 ES6](https://sanghaklee.tistory.com/54)
 - [ES6의 제너레이터를 사용한 비동기 프로그래밍](https://meetup.toast.com/posts/73)
 - [[JavaScript] ES6 문법 정리](https://itstory.tk/entry/JavaScript-ES6-%EB%AC%B8%EB%B2%95-%EC%A0%95%EB%A6%AC)
@@ -1043,7 +1128,6 @@ import "module-name";
 - [개발자가 필히 알아야 할 ES6 10가지 기능](https://blog.asamaru.net/2017/08/14/top-10-es6-features/)
 - [신선함으로 다가온 ES6 경험](http://woowabros.github.io/experience/2017/12/01/es6-experience.html)
 - [ES6시대의 JavaScript](https://gist.github.com/marocchino/841e2ff62f59f420f9d9)
-- [Mozilla 재단 JavaScript 참고자료](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference)
 - [let으로 변수 선언하기](https://www.daleseo.com/js-es2015-let/)
 - [[자바스크립트] ES6(ECMA Script6) - export, import](https://beomy.tistory.com/22)
 - [이터레이션과 for...of 문](https://poiemaweb.com/es6-iteration-for-of#3-%EC%BB%A4%EC%8A%A4%ED%85%80-%EC%9D%B4%ED%84%B0%EB%9F%AC%EB%B8%94)
