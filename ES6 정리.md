@@ -639,9 +639,44 @@ for (;;) {
 
 - 비동기처리를 행하는 함수는 Promise를 반환, 부른 쪽에서는 Promise에 콜백 함수를 등록한다.
 
-1. 대기중(pending) : 이행하거나 거부되지 않은 초기 상태.
-2. 이행됨(fulfilled) : 연산이 성공적으로 완료
-3. 거부됨(rejected) : 연산이 실패
+```JS
+var promise = new Promise(function(resolve, reject) {
+  // 비동기 처리 작성
+  // 처리가 끝나면 resolve(성공시) 또는 reject(실패시)를 호출한다.
+});
+
+promise.then(onFulfilled, onRejected)
+```
+
+- promise.then() : Promise의 객체는 성공(resolve) 또는 실패(reject)했을 때 인자로 등록된 각 함수를 호출
+  - onFulfilled : 성공(resolve)시 호출
+  - onRejected : 실패(reject)시 호출 (`promise.catch(onRejected)`로 대체 가능)
+    - 즉, `promise.then(undefined, onRejected)` 는 `promise.catch(onRejected)`와 같다.
+  - onFulfilled, onRejected는 선택적(optional) 인자이므로 생략할 수 있다.
+
+```JS
+asyncFunction().then(function (value) {
+  console.log(value); // 'Async Hello world'
+}).catch(function (error) {
+  console.log(error);
+});
+
+//위와 동일한 코드
+asyncFunction().then(function (value) {
+  console.log(value);
+}, function (error) {       //onRejected
+  console.log(error);
+});
+```
+
+- 상태
+  1. has-resolution (Fulfilled) : 성공(resolve)했을 때의 상태, `onFulfilled` 호출
+  2. has-rejection (Rejected) : 실패(reject)했을 때의 상태, `onRejected` 호출
+  3. unresolved (Pending) : 성공도 실패도 아닌 상태, promise 객체가 생성된 초기 상태
+
+- promise 객체는 Pending 으로 시작해 Fulfilled나 Rejected 상태가 되면 변화하지 않는다.
+  - Fulfilled 및 Rejected 상태는 Settled(불변) 상태
+  - Event 리스너와는 다르게 **then()으로 등록한 콜백 함수는 한 번만 호출**된다.
 
 ```JS
 var promiseTest = (num) => {
@@ -706,16 +741,13 @@ function* generator(i) {
 
 var gen = generator(10);
 
-console.log(gen.next().value);
-// expected output: 10
-
-console.log(gen.next().value);
-// expected output: 20
+console.log(gen.next().value);    // expected output: 10
+console.log(gen.next().value);    // expected output: 20
 ```
   
-1. 호출되어도 즉시 실행되지 않고, 대신 Generator 함수를 위한 Iterator 객체가 반환
-2. Iterator의 next() 메서드를 호출하면 Generator 함수가 실행
-3. yield 문을 만날 때까지 진행
+1. 호출되어도 즉시 실행되지 않고, 대신 Generator 함수를 위한 `Iterator 객체`가 반환
+2. Iterator의 `next()` 메서드를 호출하면 Generator 함수가 실행
+3. `yield` 문을 만날 때까지 진행
 4. 해당 표현식이 명시하는 Iterator로부터의 반환값을 반환
 5. 이후 next() 메서드가 호출되면 진행이 멈췄던 위치에서부터 재실행
 
@@ -728,7 +760,7 @@ console.log(gen.next().value);
   }
   ```
 
-- yield* 표현식을 마주칠 경우, 다른 Generator 함수가 위임(delegate)되어 진행
+- `yield*` 표현식을 마주칠 경우, 다른 Generator 함수가 위임(delegate)되어 진행
 
   ```JS
   function* anotherGenerator(i) {
@@ -739,7 +771,7 @@ console.log(gen.next().value);
 
   function* generator(i){
     yield i;
-    yield* anotherGenerator(i);
+    yield* anotherGenerator(i);       //anotherGenerator함수에게 위임되어 진행
     yield i + 10;
   }
 
@@ -756,27 +788,95 @@ console.log(gen.next().value);
 
 - 순정의 Generator를 사용하려면 사용상의 불편함이 있다.
 - Co 모듈은 Promise, Array, Object, Generator, … 을 반환하는 함수에 yield 구문을 사용
+- generator를 쉽게 사용할 수 있는 아주 편리한 두 가지 함수를 제공
+  - co, wrap
+
+- `co` 함수에 generator를 인수로 넘기면 generator를 마지막까지 실행하고, 실행결과로 promise를 반환해 준다.
+
+```JS
+//모든 함수는 promise를 반환한다고 가정
+co(function* () {
+    let result = false;
+    try {             //try... catch문 사용 가능
+        const id = yield getId('010-1234-5678');
+        const email = yield getEmail(id);
+        const name = yield getName(email);
+        result = yield order(name, 'coffee');
+    } catch(err) {
+        console.log('이 또한 지나가리라…', err); // 에러처리 로직
+    }
+    return result;
+}).then(result => {
+    console.log(result);
+});
+```
+
+- `wrap` 함수를 사용하면 generator 함수를 promise를 반환하는 함수로 변환할 수도 있다.
+
+```JS
+const orderCoffee = co.wrap(function *() {
+    const id = yield getId('010-1234-5678');
+    const email = yield getEmail(id);
+    const name = yield getName(email);
+    return yield order(name, 'coffee');
+});
+
+orderCoffee.then(result => {
+    console.log(result);
+});
+```
+
+> #### Koa
+>
+> - Express의 업그레이드 버전
+> - Express와 동일한 기능이 제너레이터 기반으로 작성되어서 편하게 비동기 코드를 작성할 수 있다.
+> - 예를 들어 koa-router를 사용해서 특정 URL을 핸들링 할 때 제너레이터를 사용해서 다음과 같이 작성할 수 있다.
+>
+> ```JS
+> router.post('/login', function*() {
+>     const {email, password} = this.request.body;
+>     const user = yield userDB.get(email);
+>     const valid = yield crypter.compare(password, user.password);
+>   //     …
+> });
+> ```
 
 #### async/await (ES8)
 
 - async function 선언은 AsyncFunction객체를 반환하는 비동기 함수를 정의
 - 암시적으로 Promise를 사용하여 결과를 반환
 
-- 리팩토링 (Generator -> async/await)
+- 리팩토링 (Generator, Co -> async/await)
   
   ```JS
-  // ES6 - Generator
-  const bigPicture = function* () {
-    let awesome = yield beautiful()
-  }
+  // ES6 - Generator, Co
+  const orderCoffee = co.wrap(function *() {
+    const id = yield getId('010-1234-5678');
+    const email = yield getEmail(id);
+    const name = yield getName(email);
+    return yield order(name, 'coffee');
+  });
 
-  // ES8 - async/await
-  const bigPicture = async function() {
-    let awesome = await beautiful()
-  }
+  orderCoffee.then(result => {
+      console.log(result);
+  });
   ```
 
-  - `function*` -> `async function`
+  ```JS
+  // ES8 - async/await
+  async function orderCoffee(phoneNumber) {
+    const id = await getId(phoneNumber);
+    const email = await getEmail(id);
+    const name = await getName(email);
+    return await order(name, 'coffee')
+  }
+
+  orderCoffee('011-1234-5678').then(result => {
+      console.log(result);
+  });
+  ```
+
+  - `co.wrap(function *()` -> `async function`
   - `yield` -> `await`
 
 ---
