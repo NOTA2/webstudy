@@ -114,7 +114,8 @@ var app = http.createServer(function(request,response){
 ## App - 동적인 웹페이지 만들기
 
 - 쿼리 스트링과 Template Literal을 사용하여 동적인 웹 페이지를 생성한다.
-```
+  
+```JS
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
@@ -189,7 +190,7 @@ fs.readFile('sample.txt', 'utf8', function(err, data){
 
 ## App - 파일을 이용해 본문 구현
 
-```
+```JS
  fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description){
       var template = `
       <!doctype html>
@@ -245,7 +246,7 @@ fs.readFile('sample.txt', 'utf8', function(err, data){
     - 1번째 인덱스 : 실행시킨 파일의 경로
     - 2번째 인덱스 부터 전달된 입력값이 있다.
 
-```
+```JS
 node app.js egoing      //터미널에서
 -----------------------
 
@@ -264,7 +265,7 @@ console.log(args[2]);       //egoing
         - ```response.writeHead(404);```
         - ```response.end('Not found');```
 
-```
+```JS
 var _url = request.url;
 var queryData = url.parse(_url, true).query;
 var pathname = url.parse(_url, true).pathname;
